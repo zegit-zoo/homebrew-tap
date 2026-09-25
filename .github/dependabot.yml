@@ -1,0 +1,26 @@
+version: 2
+
+# Mirrors the github-actions half of meerkat's .github/dependabot.yml
+# (zegit-zoo/meerkat) so both repos age pinned action SHAs the same way.
+# The workflows here pin actions to a commit SHA, not a floating tag, so
+# without this nothing ever moves them.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    # github-actions supports `default-days` only — the semver-*-days options are
+    # documented as unsupported for this ecosystem (Dependabot options reference,
+    # cooldown support table), so they are deliberately absent here.
+    cooldown:
+      default-days: 3
+    groups:
+      # One PR for every minor/patch action bump. Majors are deliberately absent
+      # from update-types: an unmatched dependency falls back to its own PR.
+      actions-minor-patch:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
