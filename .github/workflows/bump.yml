@@ -49,18 +49,23 @@ jobs:
             echo "changed=true" >>"$GITHUB_OUTPUT"
           fi
 
+      # For a repository named homebrew-*, setup-homebrew taps it itself at
+      # GITHUB_SHA (a second clone, separate from this workspace) and exposes
+      # the tap path as `repository-path`.
       - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
+        id: brew
         if: steps.changed.outputs.changed == 'true'
 
       # `brew install ./Formula/meerkat.rb` is rejected outright ("Homebrew
-      # requires formulae to be in a tap"), and `brew tap <name> <path>` clones,
-      # so it would only ever see committed state. tap-new + copy is the form
-      # that works against the still-uncommitted regenerated formula.
+      # requires formulae to be in a tap"), and the tap clone made by
+      # setup-homebrew only holds the committed formula. Copy the regenerated
+      # (still uncommitted) formula over that clone's copy and test it there.
       - name: Install and test the regenerated formula
         if: steps.changed.outputs.changed == 'true'
+        env:
+          TAP_PATH: ${{ steps.brew.outputs.repository-path }}
         run: |
-          brew tap-new zegit-zoo/tap --no-git
-          cp Formula/meerkat.rb "$(brew --repository zegit-zoo/tap)/Formula/meerkat.rb"
+          cp Formula/meerkat.rb "$TAP_PATH/Formula/meerkat.rb"
           brew style zegit-zoo/tap
           brew audit --strict --online zegit-zoo/tap/meerkat
           brew install zegit-zoo/tap/meerkat

@@ -17,14 +17,21 @@ jobs:
       matrix:
         os: [macos-latest, ubuntu-latest]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-
+      # No actions/checkout here: for a repository named homebrew-*, the
+      # setup-homebrew action taps it itself, checked out at GITHUB_SHA (the
+      # PR merge commit or the pushed commit), and exposes the tap's path.
+      # A separate `brew tap zegit-zoo/tap $GITHUB_WORKSPACE` would fail
+      # with "remote mismatch" against that pre-existing tap.
       - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
+        id: brew
 
-      # Tap this checkout itself, so the formula under test is the one in
-      # the PR rather than whatever is on main.
-      - name: Tap the local checkout
-        run: brew tap zegit-zoo/tap "$GITHUB_WORKSPACE"
+      - name: Assert the tapped commit is the one under test
+        env:
+          TAP_PATH: ${{ steps.brew.outputs.repository-path }}
+        run: |
+          tapped="$(git -C "$TAP_PATH" rev-parse HEAD)"
+          echo "tap at $TAP_PATH is $tapped (GITHUB_SHA=$GITHUB_SHA)"
+          [ "$tapped" = "$GITHUB_SHA" ]
 
       - name: brew style
         run: brew style zegit-zoo/tap
