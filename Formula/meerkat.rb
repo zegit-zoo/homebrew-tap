@@ -56,13 +56,10 @@ class Meerkat < Formula
       It conflicts with the `mk` formula (the Plan 9 build tool), which ships an
       unrelated `mk` executable.
 
-      Update this install with:
-        brew upgrade meerkat
-
-      Do not use the built-in `mk update` self-updater on a Homebrew install: it
-      swaps the binary in place, inside the Cellar, leaving Homebrew's records
-      pointing at a file it no longer knows the checksum of. `brew upgrade` is
-      the supported path.
+      Use `brew upgrade meerkat` to update. The built-in `mk update`
+      self-updater is not for Homebrew installs: releases after 0.11.1 refuse to
+      run it from the Cellar, and 0.11.1 would swap the binary in place behind
+      Homebrew's back.
 
       meerkat checks for new releases in the background and prints a one-line
       notice. To silence it:

@@ -25,10 +25,10 @@ brew install meerkat
 brew upgrade meerkat
 ```
 
-meerkat has a built-in `mk update` self-updater. **Do not use it on a Homebrew
-install** — it downloads a release and swaps the binary in place inside the
-Cellar, which leaves Homebrew's records pointing at a file whose checksum it no
-longer knows. `brew upgrade meerkat` is the supported path here.
+The built-in `mk update` self-updater is not for Homebrew installs: releases
+after 0.11.1 refuse to run it from the Cellar and tell you to run
+`brew upgrade meerkat`, and 0.11.1 would swap the binary in place behind
+Homebrew's back. Use `brew upgrade meerkat`.
 
 meerkat also checks for newer releases in the background and prints a one-line
 notice after a command. Silence it with:
@@ -77,9 +77,15 @@ sha256 values read out of the verified file and written into the formula.
 
 `.github/workflows/bump.yml` runs `scripts/update-formula.sh latest` on a
 schedule (every 6 hours) and on manual `workflow_dispatch` (which takes a `tag`
-input, defaulting to `latest`). If the regenerated formula differs from what is
-committed, the workflow pushes a `meerkat: bump to vX.Y.Z` commit straight to
-`main`; if nothing changed it exits quietly.
+input, defaulting to `latest`). If nothing changed it exits quietly.
+
+If the regenerated formula *does* differ, it is gated before it can land: the
+workflow sets up Homebrew on the runner and runs `brew style`, `brew audit
+--strict --online`, `brew install` and `brew test` against the new formula, and
+only then pushes a `meerkat: bump to vX.Y.Z` commit straight to `main`. That
+gate is not redundant with `test.yml` — pushes made with `GITHUB_TOKEN` do not
+trigger workflows, so a bot bump never sets off `test.yml` and would otherwise
+reach `main` untested.
 
 `.github/workflows/test.yml` runs `brew audit`, `brew style`, `brew install` and
 `brew test` against the tap on both macOS and Linux for every push and pull
