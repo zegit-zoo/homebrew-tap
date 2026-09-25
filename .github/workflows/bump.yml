@@ -1,0 +1,59 @@
+name: Bump formula
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "meerkat release tag to pin (e.g. v0.11.2), or 'latest'"
+        required: false
+        default: latest
+  schedule:
+    # Every 6 hours, at a minute that isn't the top of the hour.
+    - cron: "17 */6 * * *"
+
+# Restrictive default: the job below opts into write access explicitly.
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    name: Regenerate meerkat.rb
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the bump commit to main
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
+
+      # Hard-fails if the release's checksums file doesn't verify against
+      # meerkat's release workflow identity, so an unverified formula can
+      # never reach main.
+      - name: Regenerate the formula
+        env:
+          TAG: ${{ inputs.tag || 'latest' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/update-formula.sh "$TAG"
+
+      - name: Commit and push if the formula changed
+        run: |
+          if git diff --quiet -- Formula/meerkat.rb; then
+            echo "Formula already up to date; nothing to commit."
+            exit 0
+          fi
+
+          # Read the tag back out of the generated URLs — the formula has no
+          # explicit `version` (brew audit --strict rejects restating it).
+          new_tag="$(sed -n 's|.*/releases/download/\(v[0-9][^/]*\)/.*|\1|p' \
+            Formula/meerkat.rb | head -n 1)"
+          if [ -z "$new_tag" ]; then
+            echo "Could not read the tag back out of Formula/meerkat.rb" >&2
+            exit 1
+          fi
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add Formula/meerkat.rb
+          git commit -m "meerkat: bump to ${new_tag}"
+          git push

@@ -1,0 +1,39 @@
+name: Test formula
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: brew test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
+
+      # Tap this checkout itself, so the formula under test is the one in
+      # the PR rather than whatever is on main.
+      - name: Tap the local checkout
+        run: brew tap zegit-zoo/tap "$GITHUB_WORKSPACE"
+
+      - name: brew style
+        run: brew style zegit-zoo/tap
+
+      - name: brew audit
+        run: brew audit --strict --online zegit-zoo/tap/meerkat
+
+      - name: brew install
+        run: brew install zegit-zoo/tap/meerkat
+
+      - name: brew test
+        run: brew test zegit-zoo/tap/meerkat
