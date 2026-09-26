@@ -12,14 +12,14 @@ Homebrew formulae for [zegit-zoo](https://github.com/zegit-zoo) tools.
 brew install zegit-zoo/tap/meerkat
 ```
 
-That is the recommended form. Homebrew 7 requires third-party taps to be
-trusted before it will load a formula from them, and installing by the fully
+That is the recommended form. Homebrew 6.0 and later require third-party taps
+to be trusted before they will load a formula from them, and installing by the fully
 qualified name above trusts *only* this formula — the tap itself stays
 untrusted. Nothing else is needed: `brew info`, `brew outdated` and
 `brew upgrade meerkat` all work afterwards on that formula-level trust.
 
-Or tap first, then install by bare name. On Homebrew 7 this needs an explicit
-trust step in between — without it, `brew install meerkat` refuses to load the
+Or tap first, then install by bare name. On Homebrew 6.0 and later this needs
+an explicit trust step in between — without it, `brew install meerkat` refuses to load the
 formula from an untrusted tap:
 
 ```sh
@@ -32,14 +32,20 @@ brew install meerkat
 in this tap, including ones added to it later. Per-formula trust is the narrower
 scope, and the one [Homebrew recommends](https://docs.brew.sh/Tap-Trust).
 
-Homebrew 6 and older have no `brew trust` and no tap-trust prompt at all — there
-the `brew tap` + `brew install meerkat` pair works as-is.
+Homebrew 5 and older have no `brew trust` and no tap-trust prompt at all — there
+the `brew tap` + `brew install meerkat` pair works as-is. (Tap trust arrived in
+[Homebrew 6.0.0](https://docs.brew.sh/Tap-Trust).)
 
 ## Upgrade
 
 ```sh
-brew upgrade meerkat
+brew update && brew upgrade meerkat
 ```
+
+`brew update` refreshes this tap first. brew only re-reads a tap on its own
+schedule (`HOMEBREW_AUTO_UPDATE_SECS`, a day by default), and the formula is
+bumped a few hours after each meerkat release, so a bare `brew upgrade meerkat`
+right after the update notice often reports "already up to date".
 
 The built-in `mk update` self-updater is not for Homebrew installs: releases
 after 0.11.1 refuse to run it from the Cellar and tell you to run
