@@ -12,12 +12,28 @@ Homebrew formulae for [zegit-zoo](https://github.com/zegit-zoo) tools.
 brew install zegit-zoo/tap/meerkat
 ```
 
-Or tap first, then install by bare name:
+That is the recommended form. Homebrew 7 requires third-party taps to be
+trusted before it will load a formula from them, and installing by the fully
+qualified name above trusts *only* this formula — the tap itself stays
+untrusted. Nothing else is needed: `brew info`, `brew outdated` and
+`brew upgrade meerkat` all work afterwards on that formula-level trust.
+
+Or tap first, then install by bare name. On Homebrew 7 this needs an explicit
+trust step in between — without it, `brew install meerkat` refuses to load the
+formula from an untrusted tap:
 
 ```sh
 brew tap zegit-zoo/tap
+brew trust --formula zegit-zoo/tap/meerkat
 brew install meerkat
 ```
+
+`brew trust zegit-zoo/tap` is the broader alternative: it trusts every formula
+in this tap, including ones added to it later. Per-formula trust is the narrower
+scope, and the one [Homebrew recommends](https://docs.brew.sh/Tap-Trust).
+
+Homebrew 6 and older have no `brew trust` and no tap-trust prompt at all — there
+the `brew tap` + `brew install meerkat` pair works as-is.
 
 ## Upgrade
 
