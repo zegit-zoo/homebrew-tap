@@ -22,6 +22,21 @@ jobs:
     permissions:
       contents: write   # push the bump commit to main
     steps:
+      # setup-homebrew goes FIRST. For a repository named homebrew-*, it
+      # empties the workspace (.git included), puts a fresh repository at
+      # GITHUB_SHA there, and links the tap to it (setup-homebrew/main.sh at
+      # the pinned SHA, "Make repo available under GITHUB_WORKSPACE"). Run
+      # after the regenerate step, as it used to be, it discarded the new
+      # formula, together with the checkout's push credentials and main's
+      # upstream. brew then tested the committed formula, and 0.13.0 passed
+      # for the v0.15.0 bump (run 36685011538). It now runs on every run,
+      # no-ops included, which costs about 20 s.
+      - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
+        id: brew
+
+      # Checked out AFTER setup-homebrew, into the same (linked) directory:
+      # the tap brew reads is this checkout, which keeps its credentials and
+      # main's upstream for the push below.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Install cosign
@@ -37,61 +52,66 @@ jobs:
         run: ./scripts/update-formula.sh "$TAG"
 
       # A push made with GITHUB_TOKEN does not trigger test.yml, so a bump
-      # would otherwise land on main untested. Gate it here instead. Skipped
-      # entirely when nothing changed, so the 6-hourly no-op runs stay cheap.
+      # would otherwise land on main untested. Gate it here instead: skipped
+      # when nothing changed. The target tag is read here, straight after
+      # regenerating, so the checks below compare against what was verified,
+      # not against whatever the working tree holds later.
       - name: Check whether the formula changed
         id: changed
         run: |
           if git diff --quiet -- Formula/meerkat.rb; then
             echo "changed=false" >>"$GITHUB_OUTPUT"
             echo "Formula already up to date; nothing to test or commit."
-          else
-            echo "changed=true" >>"$GITHUB_OUTPUT"
+            exit 0
           fi
-
-      # For a repository named homebrew-*, setup-homebrew taps it itself and
-      # exposes the tap path as `repository-path`. On current runners that tap
-      # is a link to this workspace, not a second clone (see the next step).
-      - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
-        id: brew
-        if: steps.changed.outputs.changed == 'true'
+          # The formula has no explicit `version` (brew audit --strict
+          # rejects restating it), so read the tag out of the URLs.
+          tag="$(sed -n 's|.*/releases/download/\(v[0-9][^/]*\)/.*|\1|p' \
+            Formula/meerkat.rb | head -n 1)"
+          if [ -z "$tag" ]; then
+            echo "Could not read the tag back out of Formula/meerkat.rb" >&2
+            exit 1
+          fi
+          echo "changed=true" >>"$GITHUB_OUTPUT"
+          echo "tag=$tag" >>"$GITHUB_OUTPUT"
+          echo "Regenerated for $tag."
 
       # `brew install ./Formula/meerkat.rb` is rejected outright ("Homebrew
-      # requires formulae to be in a tap"). In a homebrew-* repository,
-      # setup-homebrew links the tap to this checkout (see test.yml), so the
-      # regenerated, still uncommitted formula is already what brew sees, and
-      # a plain `cp` onto itself fails with "are the same file", which aborted
-      # every bump from v0.14.0 on. Copy only when the tap is a separate
-      # clone, and test it there either way.
+      # requires formulae to be in a tap"), so the tap is what gets tested.
+      # It is normally this checkout. Should setup-homebrew ever hand over a
+      # separate clone, the regenerated formula is copied into it. Either way
+      # the installed version must be the target, so a test of the wrong
+      # formula can never pass again.
       - name: Install and test the regenerated formula
         if: steps.changed.outputs.changed == 'true'
         env:
           TAP_PATH: ${{ steps.brew.outputs.repository-path }}
+          TAG: ${{ steps.changed.outputs.tag }}
         run: |
           if [ Formula/meerkat.rb -ef "$TAP_PATH/Formula/meerkat.rb" ]; then
-            echo "The tap is this checkout; the regenerated formula is already in place."
+            echo "The tap is this checkout."
           else
             cp Formula/meerkat.rb "$TAP_PATH/Formula/meerkat.rb"
           fi
           brew style zegit-zoo/tap
           brew audit --strict --online zegit-zoo/tap/meerkat
           brew install zegit-zoo/tap/meerkat
+          installed="$(brew info --json=v2 zegit-zoo/tap/meerkat |
+            jq -r '.formulae[0].installed[0].version // empty')"
+          if [ "$installed" != "${TAG#v}" ]; then
+            echo "brew installed meerkat '${installed}', not ${TAG#v}: it did not read the regenerated formula." >&2
+            exit 1
+          fi
+          echo "Installed meerkat ${installed}, the target ${TAG}."
           brew test zegit-zoo/tap/meerkat
 
       - name: Commit and push
         if: steps.changed.outputs.changed == 'true'
+        env:
+          TAG: ${{ steps.changed.outputs.tag }}
         run: |
-          # Read the tag back out of the generated URLs — the formula has no
-          # explicit `version` (brew audit --strict rejects restating it).
-          new_tag="$(sed -n 's|.*/releases/download/\(v[0-9][^/]*\)/.*|\1|p' \
-            Formula/meerkat.rb | head -n 1)"
-          if [ -z "$new_tag" ]; then
-            echo "Could not read the tag back out of Formula/meerkat.rb" >&2
-            exit 1
-          fi
-
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add Formula/meerkat.rb
-          git commit -m "meerkat: bump to ${new_tag}"
+          git commit -m "meerkat: bump to ${TAG}"
           git push
