@@ -49,9 +49,9 @@ jobs:
             echo "changed=true" >>"$GITHUB_OUTPUT"
           fi
 
-      # For a repository named homebrew-*, setup-homebrew taps it itself at
-      # GITHUB_SHA (a second clone, separate from this workspace) and exposes
-      # the tap path as `repository-path`.
+      # For a repository named homebrew-*, setup-homebrew taps it itself and
+      # exposes the tap path as `repository-path`. On current runners that tap
+      # is a link to this workspace, not a second clone (see the next step).
       - uses: Homebrew/actions/setup-homebrew@848c272c7bfe984a197bd4d16383f4c106ec61e6  # 2026.09.21.1
         id: brew
         if: steps.changed.outputs.changed == 'true'
