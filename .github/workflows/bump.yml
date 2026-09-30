@@ -57,15 +57,22 @@ jobs:
         if: steps.changed.outputs.changed == 'true'
 
       # `brew install ./Formula/meerkat.rb` is rejected outright ("Homebrew
-      # requires formulae to be in a tap"), and the tap clone made by
-      # setup-homebrew only holds the committed formula. Copy the regenerated
-      # (still uncommitted) formula over that clone's copy and test it there.
+      # requires formulae to be in a tap"). In a homebrew-* repository,
+      # setup-homebrew links the tap to this checkout (see test.yml), so the
+      # regenerated, still uncommitted formula is already what brew sees, and
+      # a plain `cp` onto itself fails with "are the same file", which aborted
+      # every bump from v0.14.0 on. Copy only when the tap is a separate
+      # clone, and test it there either way.
       - name: Install and test the regenerated formula
         if: steps.changed.outputs.changed == 'true'
         env:
           TAP_PATH: ${{ steps.brew.outputs.repository-path }}
         run: |
-          cp Formula/meerkat.rb "$TAP_PATH/Formula/meerkat.rb"
+          if [ Formula/meerkat.rb -ef "$TAP_PATH/Formula/meerkat.rb" ]; then
+            echo "The tap is this checkout; the regenerated formula is already in place."
+          else
+            cp Formula/meerkat.rb "$TAP_PATH/Formula/meerkat.rb"
+          fi
           brew style zegit-zoo/tap
           brew audit --strict --online zegit-zoo/tap/meerkat
           brew install zegit-zoo/tap/meerkat
