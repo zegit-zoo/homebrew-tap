@@ -17,25 +17,25 @@ class Meerkat < Formula
 
   on_macos do
     on_arm do
-      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.19.0/meerkat_0.19.0_darwin_arm64.tar.gz"
-      sha256 "1f2c182e558f4bd078ed3676b760ca995fcc43b0a5a6e782ab2e62c1340e94d4"
+      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.20.0/meerkat_0.20.0_darwin_arm64.tar.gz"
+      sha256 "e484f688b4acda9dd067e4519dadadbb5d301eb48d831cfc857bcc67dd500786"
     end
 
     on_intel do
-      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.19.0/meerkat_0.19.0_darwin_amd64.tar.gz"
-      sha256 "8e161052ee40382f63f7e0373820a93d40ddf980cb227f2859b3f3ed785c11fc"
+      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.20.0/meerkat_0.20.0_darwin_amd64.tar.gz"
+      sha256 "a958007f1f0c4cfa9e9b115a61569475e3478b75accc4da3fcd2275e417aae76"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.19.0/meerkat_0.19.0_linux_arm64.tar.gz"
-      sha256 "bee1112ab8505ee0ff6862966519156cf29e159009f7af51890305c1eb373d50"
+      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.20.0/meerkat_0.20.0_linux_arm64.tar.gz"
+      sha256 "6eddc9ac31d34b9f8e1da1f9f5ab3e2357b3646d07df3fb7d585327e15cc86f5"
     end
 
     on_intel do
-      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.19.0/meerkat_0.19.0_linux_amd64.tar.gz"
-      sha256 "e94700f0ebef801963402850fa1c888f92c061664717b19a47904f4c41a8e4d0"
+      url "https://github.com/zegit-zoo/meerkat/releases/download/v0.20.0/meerkat_0.20.0_linux_amd64.tar.gz"
+      sha256 "904cef538ea612e65b22285d25fc2e7bd39cedbb929c8fe8d5395d9d6b48f367"
     end
   end
 
