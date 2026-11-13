@@ -31,7 +31,7 @@ jobs:
       # upstream. brew then tested the committed formula, and 0.13.0 passed
       # for the v0.15.0 bump (run 36685011538). It now runs on every run,
       # no-ops included, which costs about 20 s.
-      - uses: Homebrew/actions/setup-homebrew@d482da0e602890d3160aade42e72c8556103bf04  # 2026.10.26.1
+      - uses: Homebrew/actions/setup-homebrew@63a2d4d8d4193eab3e62b1b782ff3ab8408f5b29  # 2026.11.09.1
         id: brew
 
       # Checked out AFTER setup-homebrew, into the same (linked) directory:
@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
       - name: Install cosign
-        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6  # v4.1.2
+        uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532  # v4.1.3
 
       # Hard-fails if the release's checksums file doesn't verify against
       # meerkat's release workflow identity, so an unverified formula can
