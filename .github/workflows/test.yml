@@ -22,7 +22,7 @@ jobs:
       # PR merge commit or the pushed commit), and exposes the tap's path.
       # A separate `brew tap zegit-zoo/tap $GITHUB_WORKSPACE` would fail
       # with "remote mismatch" against that pre-existing tap.
-      - uses: Homebrew/actions/setup-homebrew@63a2d4d8d4193eab3e62b1b782ff3ab8408f5b29  # 2026.11.09.1
+      - uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d  # 2026.11.14.1
         id: brew
 
       - name: Assert the tapped commit is the one under test
