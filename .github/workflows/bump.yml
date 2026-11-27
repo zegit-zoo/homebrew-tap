@@ -31,7 +31,7 @@ jobs:
       # upstream. brew then tested the committed formula, and 0.13.0 passed
       # for the v0.15.0 bump (run 36685011538). It now runs on every run,
       # no-ops included, which costs about 20 s.
-      - uses: Homebrew/actions/setup-homebrew@ceec4e8419bb3c97ce96e9dda7738499ed5f869d  # 2026.11.14.1
+      - uses: Homebrew/actions/setup-homebrew@61b401267256bb9c047d6d1481b176d5772a0ba7  # 2026.11.23.1
         id: brew
 
       # Checked out AFTER setup-homebrew, into the same (linked) directory:
